@@ -1,0 +1,119 @@
+---
+title: "MP.2"
+output:
+  html_document:
+    df_print: paged
+date: "2024-10-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(readr)
+library(ggplot2)
+library(forecast)
+library(fpp)
+library(fpp2)
+library(TTR)
+
+
+Ins <- read.csv("C:\\Users\\mansi gopani\\Downloads\\insurance.csv")
+Ins1 <- Ins$Quotes
+
+Ins_ts <- ts(Ins1, frequency = 12 , start = c(2002,1), end = c(2009,4))
+Ins_ts
+
+plot(Ins_ts)
+acf(Ins_ts)
+Decomp_ts <- decompose(Ins_ts)
+plot(Decomp_ts)
+#1,2)This insurance data since 2002 provides an extensive view of how quote values have changed over the years. This allows us to assess whether the volume of quotes has increased or decreased overall by utilizing all available data.
+
+
+#3)This dataset exhibits both a trend and seasonality. The trend reflects long-term changes, while the seasonality indicates periodic variations.
+
+acf(Ins_ts)
+#4)The ACF plot shows multiple spikes at various lags, confirming the presence of autocorrelation, which indicates both trend and seasonality in the data.
+
+Decomp_ts <- stl(Ins_ts, s.window = "periodic")
+Decomp_ts
+plot(Decomp_ts)
+
+#5)The Trend component captures the overall direction or progression of values over time, highlighting long-term patterns. The Seasonal component represents recurring cycles or patterns within specific intervals, such as monthly or yearly fluctuations.
+
+
+#6)RMSE
+
+naive_fc <- naive(Ins_ts, h = 12)
+plot(naive_fc)
+
+mean_fc <- meanf(Ins_ts, h = 12)
+plot(mean_fc)
+
+ets_fc <- ets(Ins_ts)
+ets_fc <- forecast(ets_fc, h = 12)
+plot(ets_fc)
+
+holtw_fc <- HoltWinters(Ins_ts)
+holtw_fc <- forecast(holtw_fc, h = 12)
+plot(holtw_fc)
+decomp_ts1 <- stlf(Ins_ts, s.window = "periodic")
+plot(decomp_ts1)
+
+
+decomp_add <- decompose(Ins_ts, type="add")
+decomp_mult <- decompose(Ins_ts, type="multi")
+
+decomp_add_fc <- stlf(decomp_add$trend, h=12)
+decomp_mult_fc <- stlf(decomp_mult$trend,h=12)
+
+plot(decomp_add_fc)
+plot(decomp_mult_fc)
+
+
+accuracy(naive_fc)
+accuracy(mean_fc)
+accuracy(ets_fc)
+accuracy(holtw_fc)
+accuracy(decomp_ts1)
+
+ets_acc <- accuracy(ets_fc)
+ets_rmse <- ets_acc[,"RMSE"]
+
+holtw_acc <- accuracy(holtw_fc)
+holtw_rmse <- holtw_acc[,"RMSE"]
+
+rmse_values <- c(ets_rmse, holtw_rmse)
+model_names <- c("Exp Smoothing", "Holt-Winters")
+
+rmse_ds <- data.frame(Model = model_names, RMSE = rmse_values)
+print(rmse_ds)
+
+#Decomposed Forecast: 1.711 (Best), ETS Forecast: 1.92,Naive Forecast: 1.93,Holt-Winters Forecast: 2.22 ,Mean Forecast: 2.33 (Worst)
+
+#Decompostion forecasting model
+final_fc <- forecast(decomp_ts1, h = 12) 
+plot(final_fc)
+final_fc
+
+#Our forecasts use data from the past eight years, allowing us to capture both long-term trends and yearly patterns. We applied several forecasting methods to get a well-rounded view of what might happen, and our tests indicate that these forecasts are accurate and reliable.
+
+#Interpretation of Forecast Models in Simple Terms:
+#Naive Model: This model assumes that if there was a certain number of quotes last month, the best guess for next month is that the number will be about the same.
+
+#Mean Model: If there aren’t any obvious trends or patterns in the data, this model assumes that the number of quotes will remain steady, averaging out any fluctuations.
+
+#Exponential Smoothing (ETS) Forecast: This model takes recent trends into account. If the number of quotes has been increasing or decreasing, it uses that information to make a forecast that follows the current trend.
+
+#Holt-Winters Forecast: This model considers both the overall trend and seasonal patterns. It’s useful for situations where quotes tend to increase or decrease around certain times of the year.
+
+```
